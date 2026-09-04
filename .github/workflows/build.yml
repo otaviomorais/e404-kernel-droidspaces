@@ -90,8 +90,6 @@ jobs:
             "CONFIG_NET_NS=y" \
             "CONFIG_POSIX_MQUEUE=y" \
             "CONFIG_CGROUP_PIDS=y" \
-            "CONFIG_MEMCG=y" \
-            "CONFIG_FAIR_GROUP_SCHED=y" \
             "CONFIG_OVERLAY_FS=y" \
             "CONFIG_TMPFS_POSIX_ACL=y" \
             "CONFIG_TMPFS_XATTR=y" \
