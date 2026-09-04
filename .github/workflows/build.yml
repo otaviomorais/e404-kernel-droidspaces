@@ -174,8 +174,57 @@ jobs:
           [ -f "../kernel/$DTBO" ] && cp "../kernel/$DTBO" ALIOTH-dtbo.img
           [ -d "../kernel/$DTB" ] && cp -r "../kernel/$DTB" dtb/
 
-          sed -i "s/do.devicecheck=1/do.devicecheck=0/" anykernel.sh
-          sed -i "/^device=/c\device=alioth" anykernel.sh
+          # Write a clean anykernel.sh configured for alioth (POCO F3, SM8250, A/B)
+          # The stock osm0sis template is for a Galaxy Nexus (tuna/omap) and is not
+          # suitable as-is, so we replace it entirely with a minimal alioth config.
+          cat > anykernel.sh << 'AKEOF'
+### AnyKernel3 Ramdisk Mod Script
+## osm0sis @ xda-developers
+
+### AnyKernel setup
+# global properties
+properties() { '
+kernel.string=E404-DroidSpaces by otaviomorais
+do.devicecheck=1
+do.modules=0
+do.systemless=1
+do.cleanup=1
+do.cleanuponabort=0
+device.name1=alioth
+device.name2=aliothin
+device.name3=apollo
+device.name4=alioth_eea
+device.name5=
+supported.versions=
+supported.patchlevels=
+supported.vendorpatchlevels=
+'; } # end properties
+
+### AnyKernel install
+## boot files attributes
+boot_attributes() {
+set_perm_recursive 0 0 755 644 $RAMDISK/*;
+set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
+} # end attributes
+
+# boot shell variables
+BLOCK=/dev/block/by-name/boot;
+IS_SLOT_DEVICE=auto;
+RAMDISK_COMPRESSION=auto;
+PATCH_VBMETA_FLAG=auto;
+
+# import functions/variables and setup patching - see for reference (DO NOT REMOVE)
+. tools/ak3-core.sh;
+
+# boot install
+dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+
+write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+## end boot install
+AKEOF
+
+          echo "=== anykernel.sh written for alioth ==="
+          grep -E "device.name1|BLOCK=|IS_SLOT_DEVICE=|do.devicecheck" anykernel.sh
 
           zip -r9 "../${ZIP_NAME}" . -x '*.git*'
 
