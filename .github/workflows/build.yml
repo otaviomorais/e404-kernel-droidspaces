@@ -63,8 +63,14 @@ jobs:
       - name: Merge Droidspaces config fragment
         working-directory: kernel
         run: |
-          scripts/kconfig/merge_config.sh -m .config ../droidspaces.config
+          export ARCH=arm64
 
+          # Merge fragment into the generated config
+          cd out
+          ../../scripts/kconfig/merge_config.sh -m .config ../../droidspaces.config
+
+          # Resolve dependencies to produce a valid final config
+          cd ..
           make -j$(nproc) O=out \
             CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
