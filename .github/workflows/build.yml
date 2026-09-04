@@ -43,7 +43,7 @@ jobs:
 
       - name: Clone E404 kernel source
         run: |
-          git clone --depth=1 --single-branch -b staging-bpf \
+          git clone --depth=1 --single-branch -b staging-bpf --recurse-submodules --shallow-submodules \
             https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404.git kernel
 
       - name: Clone AnyKernel3
