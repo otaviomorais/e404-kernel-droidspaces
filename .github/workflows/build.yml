@@ -87,39 +87,52 @@ jobs:
             LLVM=1 LLVM_IAS=1 \
             olddefconfig
 
+          CONFIG="out/.config"
+
+          check_cfg() {
+            local want="$1"   # e.g. CONFIG_X=y or CONFIG_X=n
+            local key="${want%%=*}"
+            local val="${want##*=}"
+            if [ "$val" = "y" ]; then
+              if grep -q "^${key}=y" "$CONFIG"; then
+                echo "  ✅ $key=y"
+              else
+                echo "  ❌ $key != y"; FAIL=1
+              fi
+            else  # =n
+              if grep -q "^${key}=n" "$CONFIG" || grep -q "^# ${key} is not set" "$CONFIG"; then
+                echo "  ✅ $key=n (or not set)"
+              else
+                echo "  ❌ $key is enabled"; FAIL=1
+              fi
+            fi
+          }
+
           echo "=== Verifying Droidspaces configs ==="
           FAIL=0
-          for cfg in \
-            "CONFIG_ANDROID_PARANOID_NETWORK=n" \
-            "CONFIG_CGROUP_DEVICE=y" \
-            "CONFIG_USER_NS=y" \
-            "CONFIG_UTS_NS=y" \
-            "CONFIG_IPC_NS=y" \
-            "CONFIG_PID_NS=y" \
-            "CONFIG_NET_NS=y" \
-            "CONFIG_POSIX_MQUEUE=y" \
-            "CONFIG_CGROUP_PIDS=y" \
-            "CONFIG_MEMCG=y" \
-            "CONFIG_FAIR_GROUP_SCHED=y" \
-            "CONFIG_OVERLAY_FS=y" \
-            "CONFIG_TMPFS_POSIX_ACL=y" \
-            "CONFIG_TMPFS_XATTR=y" \
-            "CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y" \
-            "CONFIG_NETFILTER_XT_TARGET_MASQUERADE=y" \
-            "CONFIG_IP_SET=y" \
-            "CONFIG_NAMESPACES=y" \
-            "CONFIG_CGROUPS=y" \
-            "CONFIG_SECCOMP=y" \
-            "CONFIG_VETH=y" \
-            "CONFIG_BRIDGE=y" \
-            "CONFIG_DEVTMPFS=y"; do
-            if grep -q "^${cfg}" out/.config 2>/dev/null; then
-              echo "  ✅ $cfg"
-            else
-              echo "  ❌ MISSING: $cfg"
-              FAIL=1
-            fi
-          done
+          check_cfg CONFIG_ANDROID_PARANOID_NETWORK=n
+          check_cfg CONFIG_CGROUP_DEVICE=y
+          check_cfg CONFIG_USER_NS=y
+          check_cfg CONFIG_UTS_NS=y
+          check_cfg CONFIG_IPC_NS=y
+          check_cfg CONFIG_PID_NS=y
+          check_cfg CONFIG_NET_NS=y
+          check_cfg CONFIG_POSIX_MQUEUE=y
+          check_cfg CONFIG_CGROUP_PIDS=y
+          check_cfg CONFIG_MEMCG=y
+          check_cfg CONFIG_FAIR_GROUP_SCHED=y
+          check_cfg CONFIG_OVERLAY_FS=y
+          check_cfg CONFIG_TMPFS_POSIX_ACL=y
+          check_cfg CONFIG_TMPFS_XATTR=y
+          check_cfg CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
+          check_cfg CONFIG_NETFILTER_XT_TARGET_MASQUERADE=y
+          check_cfg CONFIG_IP_SET=y
+          check_cfg CONFIG_NAMESPACES=y
+          check_cfg CONFIG_CGROUPS=y
+          check_cfg CONFIG_SECCOMP=y
+          check_cfg CONFIG_VETH=y
+          check_cfg CONFIG_BRIDGE=y
+          check_cfg CONFIG_DEVTMPFS=y
 
           if [ "$FAIL" -eq 1 ]; then
             echo "=== WARNING: Some configs not enabled (missing Kconfig deps) ==="
