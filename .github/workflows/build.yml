@@ -23,31 +23,28 @@ jobs:
           sudo apt-get clean
           df -h /
 
-      - name: Clone E404 kernel source
-        run: |
-          git clone --depth=1 --single-branch -b staging-bpf \
-            https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404.git kernel
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             bc bison build-essential ccache curl flex \
             g++-arm-linux-gnueabi gcc-arm-linux-gnueabi \
-            libncurses5 libssl-dev python3 rsync \
-            unzip wget zip lz4 xz-utils
+            libncurses-dev libssl-dev python3 rsync \
+            unzip wget zip lz4 xz-utils zstd
 
-      - name: Setup Neutron Clang toolchain
+      - name: Setup Neutron Clang (AntMan)
         run: |
-          mkdir -p toolchain
-          cd toolchain
-          curl -LO "https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/30072026/neutron-clang-30072026.tar.zst"
-          tar --zstd -xf neutron-clang-30072026.tar.zst
-          mv clang neutron-clang
-          rm -f neutron-clang-30072026.tar.zst
-          echo "$(pwd)/neutron-clang/bin" >> $GITHUB_PATH
-          export PATH="$(pwd)/neutron-clang/bin:$PATH"
-          neutron-clang/bin/clang --version | head -2
+          mkdir -p "$HOME/toolchains/neutron-clang"
+          cd "$HOME/toolchains/neutron-clang"
+          bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
+          echo "$HOME/toolchains/neutron-clang/bin" >> $GITHUB_PATH
+          echo "=== Clang version ==="
+          "$HOME/toolchains/neutron-clang/bin/clang" --version | head -2
+
+      - name: Clone E404 kernel source
+        run: |
+          git clone --depth=1 --single-branch -b staging-bpf \
+            https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404.git kernel
 
       - name: Clone AnyKernel3
         run: |
@@ -56,9 +53,6 @@ jobs:
       - name: Generate base config
         working-directory: kernel
         run: |
-          export ARCH=arm64
-          export PATH="$GITHUB_WORKSPACE/toolchain/neutron-clang/bin:$PATH"
-
           make -j$(nproc) O=out \
             CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
@@ -66,15 +60,10 @@ jobs:
             LLVM=1 LLVM_IAS=1 \
             vendor/alioth_defconfig
 
-          echo "=== Base .config generated ==="
-
       - name: Merge Droidspaces config fragment
         working-directory: kernel
         run: |
           scripts/kconfig/merge_config.sh -m .config ../droidspaces.config
-
-          export ARCH=arm64
-          export PATH="$GITHUB_WORKSPACE/toolchain/neutron-clang/bin:$PATH"
 
           make -j$(nproc) O=out \
             CC="ccache clang" \
@@ -83,9 +72,7 @@ jobs:
             LLVM=1 LLVM_IAS=1 \
             olddefconfig
 
-          echo "=== Droidspaces configs merged ==="
-
-          echo "=== Verifying Droidspaces configs in .config ==="
+          echo "=== Verifying Droidspaces configs ==="
           FAIL=0
           for cfg in \
             "CONFIG_ANDROID_PARANOID_NETWORK is not set" \
@@ -120,21 +107,14 @@ jobs:
           done
 
           if [ "$FAIL" -eq 1 ]; then
-            echo ""
-            echo "=== WARNING: Some configs could not be enabled ==="
-            echo "=== This may be due to missing Kconfig dependencies ==="
-            echo "=== Continuing build anyway ==="
+            echo "=== WARNING: Some configs not enabled (missing Kconfig deps) ==="
           else
-            echo ""
             echo "=== All Droidspaces configs verified ==="
           fi
 
       - name: Build kernel
         working-directory: kernel
         run: |
-          export ARCH=arm64
-          export PATH="$GITHUB_WORKSPACE/toolchain/neutron-clang/bin:$PATH"
-
           make -j$(nproc) O=out \
             CC="ccache clang" \
             CROSS_COMPILE=aarch64-linux-gnu- \
@@ -153,11 +133,9 @@ jobs:
           DTB="out/arch/arm64/boot/dtb"
 
           if [ ! -f "$IMAGE" ]; then
-            echo "Image.gz-dtb not found, checking alternatives..."
             for img in Image Image.gz Image.gz-dtb; do
               if [ -f "out/arch/arm64/boot/$img" ]; then
                 IMAGE="out/arch/arm64/boot/$img"
-                echo "Using: $IMAGE"
                 break
               fi
             done
