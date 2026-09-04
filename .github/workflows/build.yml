@@ -67,7 +67,7 @@ jobs:
 
           # Merge fragment into the generated config
           cd out
-          ../../scripts/kconfig/merge_config.sh -m .config ../../droidspaces.config
+          ../scripts/kconfig/merge_config.sh -m .config ../../droidspaces.config
 
           # Resolve dependencies to produce a valid final config
           cd ..
