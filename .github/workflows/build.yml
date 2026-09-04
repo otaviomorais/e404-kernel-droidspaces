@@ -46,6 +46,15 @@ jobs:
           git clone --depth=1 --single-branch -b staging-bpf --recurse-submodules --shallow-submodules \
             https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404.git kernel
 
+      - name: Apply Droidspaces source patches
+        working-directory: kernel
+        run: |
+          for p in ../patches/*.patch; do
+            echo "=== Applying $p ==="
+            git apply --check "$p" && git apply "$p" && echo "OK: $p" || { echo "FAILED: $p"; exit 1; }
+          done
+          echo "=== All patches applied ==="
+
       - name: Clone AnyKernel3
         run: |
           git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git AnyKernel3
@@ -90,6 +99,8 @@ jobs:
             "CONFIG_NET_NS=y" \
             "CONFIG_POSIX_MQUEUE=y" \
             "CONFIG_CGROUP_PIDS=y" \
+            "CONFIG_MEMCG=y" \
+            "CONFIG_FAIR_GROUP_SCHED=y" \
             "CONFIG_OVERLAY_FS=y" \
             "CONFIG_TMPFS_POSIX_ACL=y" \
             "CONFIG_TMPFS_XATTR=y" \

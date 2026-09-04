@@ -1,0 +1,17 @@
+diff --git a/include/linux/compiler_types.h b/include/linux/compiler_types.h
+index 5bb522416..66cd5687a 100644
+--- a/include/linux/compiler_types.h
++++ b/include/linux/compiler_types.h
+@@ -203,6 +203,12 @@ struct ftrace_likely_data {
+ # define __copy(symbol)
+ #endif
+ 
++/*
++ * Force the compiler to not emit a warning about a variable that may be
++ * used uninitialized by initializing it to itself.
++ */
++#define uninitialized_var(x) x = x
++
+ #define __diag_push()	__diag(push)
+ #define __diag_pop()	__diag(pop)
+ 
