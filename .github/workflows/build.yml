@@ -168,11 +168,18 @@ jobs:
           cd ../AnyKernel3
 
           rm -f *.zip *.gz *.img
-          rm -rf dtb ALIOTH-*
+          rm -rf dtb ALIOTH-* boot-files 2>/dev/null
 
-          cp ../kernel/"$IMAGE" ALIOTH-Image
-          [ -f "../kernel/$DTBO" ] && cp "../kernel/$DTBO" ALIOTH-dtbo.img
+          # Place kernel/dtbo with the stock AK3 bare-name convention so the
+          # core (tools/ak3-core.sh flash_boot) can find them. The original
+          # E404 "ALIOTH-Image" naming does NOT match the stock osm0sis AK3.
+          IMGNAME=$(basename "$IMAGE")
+          cp ../kernel/"$IMAGE" "$IMGNAME"
+          [ -f "../kernel/$DTBO" ] && cp "../kernel/$DTBO" dtbo.img
           [ -d "../kernel/$DTB" ] && cp -r "../kernel/$DTB" dtb/
+
+          echo "=== kernel image staged as: $IMGNAME ==="
+          ls -la "$IMGNAME" dtbo.img 2>/dev/null
 
           # Write a clean anykernel.sh configured for alioth (POCO F3, SM8250, A/B)
           # The stock osm0sis template is for a Galaxy Nexus (tuna/omap) and is not
