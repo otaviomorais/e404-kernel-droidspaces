@@ -81,7 +81,7 @@ jobs:
           echo "=== Verifying Droidspaces configs ==="
           FAIL=0
           for cfg in \
-            "CONFIG_ANDROID_PARANOID_NETWORK is not set" \
+            "CONFIG_ANDROID_PARANOID_NETWORK=n" \
             "CONFIG_CGROUP_DEVICE=y" \
             "CONFIG_USER_NS=y" \
             "CONFIG_UTS_NS=y" \
